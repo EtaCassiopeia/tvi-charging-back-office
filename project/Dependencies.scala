@@ -12,6 +12,8 @@ object Dependencies {
     val scalaTestVersion = "3.2.2"
     val refinedVersion = "0.9.20"
     val zioConfigVersion = "1.0.4"
+    val zioMagicVersion = "0.2.3"
+    val zioMacrosVersion = "0.6.2"
   }
 
   object Libraries {
@@ -22,7 +24,14 @@ object Dependencies {
     val zioCatsInterop = "dev.zio" %% "zio-interop-cats" % zioCatsInteropVersion
     val zioLogging = "dev.zio" %% "zio-logging" % zioLoggingVersion
     val zioLoggingSlf4j = "dev.zio" %% "zio-logging-slf4j" % zioLoggingVersion
-    val zioConfig = "dev.zio" %% "zio-config" % zioConfigVersion
+
+    val zioMacros = "dev.zio" %% "zio-macros" % zioVersion
+
+    private val zioConfig: String => ModuleID = artifact => "dev.zio" %% artifact % zioConfigVersion
+    val zioConfigModules =
+      Seq("zio-config", "zio-config-magnolia", "zio-config-typesafe").map(zioConfig)
+
+    val zioMagic = "io.github.kitlangton" %% "zio-magic" % zioMagicVersion
 
     private val http4s: String => ModuleID = artifact => "org.http4s" %% artifact % https4Version
     val http4sModules = Seq("http4s-blaze-server", "http4s-dsl", "http4s-circe").map(http4s)

@@ -11,10 +11,12 @@ lazy val root = (project in file("."))
       Libraries.zio,
       Libraries.zioLogging,
       Libraries.zioLoggingSlf4j,
-      Libraries.zioConfig,
+      Libraries.zioCatsInterop,
+      Libraries.zioMagic,
+      Libraries.zioMacros,
       Libraries.refined,
       Libraries.test.zioTest,
       Libraries.test.zioTestSbt,
       Libraries.test.scalaCheck
-    ) ++ Libraries.circeModules ++ Libraries.http4sModules
+    ) ++ Libraries.circeModules ++ Libraries.http4sModules ++ Libraries.zioConfigModules
   )
