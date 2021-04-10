@@ -1,6 +1,6 @@
 package com.tvi.charging.repository
 
-import com.tvi.charging.model.Tariff
+import com.tvi.charging.model.tariff.Tariff
 import zio.logging.{Logging, log}
 import zio.macros.accessible
 import zio.{Has, ULayer, URIO, ZLayer}
