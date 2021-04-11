@@ -2,7 +2,8 @@ package com.tvi.charging
 
 import com.tvi.charging.Http4Server.Http4Server
 import com.tvi.charging.config.ServerConfig
-import com.tvi.charging.repository.TariffService
+import com.tvi.charging.repository.ChargeSessionService.ChargeSessionService
+import com.tvi.charging.repository.{ChargeSessionService, TariffService}
 import com.tvi.charging.repository.TariffService.TariffService
 import org.http4s.server.Server
 import zio._
@@ -13,7 +14,7 @@ import zio.magic.ZioProvideMagicOps
 
 object ChargingService extends App {
 
-  type AppEnvironment = TariffService with Has[ServerConfig] with Clock with Logging
+  type AppEnvironment = TariffService with ChargeSessionService with Has[ServerConfig] with Clock with Logging
   type AppTask[A] = RIO[AppEnvironment, A]
 
   def run(args: List[String]): URIO[ZEnv, ExitCode] = {
@@ -30,6 +31,7 @@ object ChargingService extends App {
         Clock.live,
         Console.live,
         TariffService.inMemory,
+        ChargeSessionService.inMemory,
         ServerConfig.configLayer,
         httpServerLayer
       )

@@ -4,8 +4,9 @@ import cats.implicits._
 import com.tvi.charging.model.CurrencyHelper.getCurrencyInstance
 import eu.timepit.refined.api.{Refined, RefinedTypeOps}
 import eu.timepit.refined.numeric.{Interval, Positive}
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Decoder, Encoder}
 
+import java.time.LocalDateTime
 import java.util.Currency
 import scala.util.Try
 import scala.util.matching.Regex
@@ -51,15 +52,19 @@ object tariff {
       )
   }
 
-  case class Tariff(fee: ConsumedEnergyFreePerKWH, parkingFee: ParkingFeePerHour, serviceFee: ServiceFee)
+  case class Tariff(
+    startsFrom: LocalDateTime,
+    fee: ConsumedEnergyFreePerKWH,
+    parkingFee: ParkingFeePerHour,
+    serviceFee: ServiceFee
+  )
 
-  implicit val consumedEnergyFeePerKWHEncoder: Encoder[ConsumedEnergyFreePerKWH] = c => Json.fromString(c.toString)
+  implicit val consumedEnergyFeePerKWHEncoder: Encoder[ConsumedEnergyFreePerKWH] = Encoder[String].contramap(_.toString)
   implicit val consumedEnergyFeePerKWHDecoder: Decoder[ConsumedEnergyFreePerKWH] =
-    Decoder.decodeString.emap(ConsumedEnergyFreePerKWH.fromString)
+    Decoder[String].emap(ConsumedEnergyFreePerKWH.fromString)
 
-  implicit val parkingFeePerHourEncoder: Encoder[ParkingFeePerHour] = c => Json.fromString(c.toString)
-  implicit val parkingFeePerHourDecoder: Decoder[ParkingFeePerHour] =
-    Decoder.decodeString.emap(ParkingFeePerHour.fromString)
+  implicit val parkingFeePerHourEncoder: Encoder[ParkingFeePerHour] = Encoder[String].contramap(_.toString)
+  implicit val parkingFeePerHourDecoder: Decoder[ParkingFeePerHour] = Decoder[String].emap(ParkingFeePerHour.fromString)
 
   private def parseFeeExpression[A](
     FeeExpression: String,

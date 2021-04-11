@@ -20,7 +20,7 @@ object Http4Server {
         server <-
           BlazeServerBuilder[AppTask](runtime.platform.executor.asEC)
             .bindHttp(serverConfig.port, serverConfig.host)
-            .withHttpApp(Routes.tariffService())
+            .withHttpApp(Routes.allRoutes)
             .resource
             .toManagedZIO
       } yield server
