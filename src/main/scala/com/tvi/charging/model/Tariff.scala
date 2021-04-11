@@ -13,8 +13,8 @@ import scala.util.matching.Regex
 
 object tariff {
 
-  type Fee = Double Refined Positive
-  object Fee extends RefinedTypeOps[Fee, Double]
+  type Fee = BigDecimal Refined Positive
+  object Fee extends RefinedTypeOps[Fee, BigDecimal]
 
   type ServiceFee = Double Refined Interval.OpenClosed[0.0d, 0.5d]
   object ServiceFee extends RefinedTypeOps[ServiceFee, Double]
@@ -24,7 +24,7 @@ object tariff {
   }
 
   object ConsumedEnergyFreePerKWH {
-    private val consumedEnergyFreePerKWHRegEx = """(\d?\.?\d+)\s?([A-Z]{3})\s?/\s?kWh""".r
+    private val consumedEnergyFreePerKWHRegEx = """(\d+?\.?\d+)\s?([A-Z]{3})\s?/\s?kWh""".r
 
     def fromString(value: String): Either[String, ConsumedEnergyFreePerKWH] =
       parseFeeExpression(
@@ -41,7 +41,7 @@ object tariff {
   }
 
   object ParkingFeePerHour {
-    private val parkingFeePerHourRegEx = """(\d?\.?\d+)\s?([A-Z]{3})\s?/\s?hour""".r
+    private val parkingFeePerHourRegEx = """(\d+?\.?\d+)\s?([A-Z]{3})\s?/\s?hour""".r
 
     def fromString(value: String): Either[String, ParkingFeePerHour] =
       parseFeeExpression(
@@ -52,11 +52,21 @@ object tariff {
       )
   }
 
-  case class Tariff(
-    startsFrom: LocalDateTime,
+  case class AddTariffRequest(
     fee: ConsumedEnergyFreePerKWH,
     parkingFee: ParkingFeePerHour,
-    serviceFee: ServiceFee
+    serviceFee: ServiceFee,
+    startsFrom: Option[LocalDateTime] = None
+  ) {
+    def toTariffRecord: TariffRecord =
+      TariffRecord(fee, parkingFee, serviceFee, startsFrom.getOrElse(LocalDateTime.now()))
+  }
+
+  case class TariffRecord(
+    fee: ConsumedEnergyFreePerKWH,
+    parkingFee: ParkingFeePerHour,
+    serviceFee: ServiceFee,
+    startsFrom: LocalDateTime
   )
 
   implicit val consumedEnergyFeePerKWHEncoder: Encoder[ConsumedEnergyFreePerKWH] = Encoder[String].contramap(_.toString)

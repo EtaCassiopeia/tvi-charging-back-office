@@ -1,13 +1,18 @@
 package com.tvi.charging.repository
 
+import cats.data.Validated.Invalid
 import com.tvi.charging.model.BadRequestError
-import com.tvi.charging.model.chargeSession.{AddChargeSessionRequest, ChargeSessionRecord}
+import com.tvi.charging.model.chargeSession.{
+  AddChargeSessionRequest,
+  ChargeSessionRecord,
+  ChargeSessionResponse,
+  ChargeSessionsResponse,
+  Cost
+}
 import com.tvi.charging.repository.TariffService.TariffService
 import zio.logging.{Logging, log}
 import zio.macros.accessible
-import zio.{Has, RIO, Ref, ULayer, ZIO, ZLayer}
-
-import java.time.LocalDateTime
+import zio.{Has, RIO, Ref, ULayer, ZIO}
 
 @accessible
 object ChargeSessionService {
@@ -16,46 +21,50 @@ object ChargeSessionService {
 
   trait Service {
     def addChargeSession(addChargeSessionRequest: AddChargeSessionRequest): RIO[Env, Unit]
-    def getChargeSessions(
-      startDateTime: Option[LocalDateTime] = None,
-      endDateTime: Option[LocalDateTime] = None
-    ): RIO[Env, List[ChargeSessionRecord]]
-    def getChargeSessionsByDriverId(
-      driverId: String,
-      startDateTime: Option[LocalDateTime] = None,
-      endDateTime: Option[LocalDateTime] = None
-    ): RIO[Env, List[ChargeSessionRecord]]
+    def getChargeSessionsByDriverId(driverId: String): RIO[Env, ChargeSessionsResponse]
   }
 
   object Service {
-    val inMemory: Service =
+    def inMemory(chargeSessions: Ref[List[ChargeSessionRecord]]): Service =
       new Service {
-        private val chargeSessions = Ref.make(List.empty[ChargeSessionRecord])
-
         override def addChargeSession(addChargeSessionRequest: AddChargeSessionRequest): RIO[Env, Unit] =
           for {
-            currentTime <- ZIO.succeed(LocalDateTime.now())
-            _ <- ZIO.when(!addChargeSessionRequest.validate()) {
-              ZIO.fail(BadRequestError("A charge session can't start nor end in the future"))
+            _ <- ZIO.whenCase(addChargeSessionRequest.validate()) {
+              case Invalid(error) =>
+                ZIO.fail(BadRequestError(error))
+              case _ => ZIO.unit
             }
             activeTariff <- TariffService.getActiveTariff(addChargeSessionRequest.sessionStartTime)
             _ <- log.info(s"Adding charge session $addChargeSessionRequest")
-            sessions <- chargeSessions
-            _ <- sessions.update(_ :+ addChargeSessionRequest.toChargeSessionRecord(activeTariff))
+            _ <- chargeSessions.update(_ :+ addChargeSessionRequest.toChargeSessionRecord(activeTariff))
           } yield ()
 
-        override def getChargeSessions(
-          startDateTime: Option[LocalDateTime],
-          endDateTime: Option[LocalDateTime]
-        ): RIO[Env, List[ChargeSessionRecord]] = ???
-
-        override def getChargeSessionsByDriverId(
-          driverId: String,
-          startDateTime: Option[LocalDateTime],
-          endDateTime: Option[LocalDateTime]
-        ): RIO[Env, List[ChargeSessionRecord]] = ???
+        override def getChargeSessionsByDriverId(driverId: String): RIO[Env, ChargeSessionsResponse] =
+          for {
+            sessions <- chargeSessions.get.map(_.filter(_.driverId == driverId))
+            response = sessions.map { record =>
+              import record._
+              val totalCost = record.cost
+              ChargeSessionResponse(
+                sessionStartTime,
+                sessionEndTime,
+                consumedEnergy,
+                appliedTariff.fee,
+                appliedTariff.parkingFee,
+                appliedTariff.serviceFee,
+                Cost(
+                  totalCost.consumedEnergyCost.amount + totalCost.parkingCost.amount,
+                  totalCost.consumedEnergyCost.currency
+                ),
+                totalCost.serviceCost
+              )
+            }
+          } yield ChargeSessionsResponse(response)
       }
   }
 
-  val inMemory: ULayer[Has[Service]] = ZLayer.succeed(Service.inMemory)
+  val inMemory: ULayer[Has[Service]] = (for {
+    chargeSessions <- Ref.make(List.empty[ChargeSessionRecord])
+    service <- ZIO.succeed(Service.inMemory(chargeSessions))
+  } yield service).toLayer
 }

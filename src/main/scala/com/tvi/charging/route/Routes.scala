@@ -1,18 +1,19 @@
 package com.tvi.charging.route
 
 import cats.data.Kleisli
-import cats.implicits.toSemigroupKOps
+import cats.implicits._
 import com.tvi.charging.ChargingService.AppTask
-import com.tvi.charging.model.{BadRequestError, NoActiveTariffNotFoundError}
 import com.tvi.charging.model.chargeSession.AddChargeSessionRequest
 import com.tvi.charging.model.tariff._
+import com.tvi.charging.model.{BadRequestError, HttpError, NoActiveTariffNotFoundError}
 import com.tvi.charging.model.implicits._
+import com.tvi.charging.model.chargeSession._
 import com.tvi.charging.repository.{ChargeSessionService, TariffService}
-import io.circe.{Decoder, Encoder}
 import io.circe.generic.auto._
 import io.circe.refined._
 import org.http4s._
-import org.http4s.circe._
+import org.http4s.circe.CirceEntityDecoder._
+import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._
 import org.http4s.server.AuthMiddleware
@@ -27,9 +28,6 @@ object Routes {
   private val dsl = Http4sDsl[AppTask]
   import dsl._
 
-  private implicit def encoder[A](implicit D: Encoder[A]): EntityEncoder[AppTask, A] = jsonEncoderOf[AppTask, A]
-  private implicit def decoder[A](implicit D: Decoder[A]): EntityDecoder[AppTask, A] = jsonOf[AppTask, A]
-
   val realm = "dummyrealm"
 
   val authStore: BasicAuthenticator[AppTask, String] = (creds: BasicCredentials) =>
@@ -40,21 +38,21 @@ object Routes {
 
   private def handleError(error: Throwable): AppTask[Response[AppTask]] =
     error match {
-      case BadRequestError(msg)             => BadRequest(msg)
-      case NoActiveTariffNotFoundError(msg) => NotFound(msg)
-      case throwable                        => InternalServerError(throwable.getMessage)
+      case BadRequestError(msg)             => BadRequest(HttpError(msg))
+      case NoActiveTariffNotFoundError(msg) => NotFound(HttpError(msg))
+      case throwable                        => InternalServerError(HttpError(s"${throwable.getClass.getSimpleName} ${throwable.getMessage}"))
     }
 
   private[route] val tariffRoutes =
     basicAuth(AuthedRoutes.of[String, AppTask] {
-      case ctx @ POST -> Root / "tariff" as user =>
+      case ContextRequest(user, req @ POST -> Root / "tariff") =>
         for {
-          tariff <- ctx.req.as[Tariff].tapError(t => log.error(t.getMessage))
+          tariff <- req.as[AddTariffRequest].tapError(t => log.error(t.getMessage))
           _ <- log.info(s"Handling request $tariff [$user]")
           resp <-
             TariffService
               .submitTariff(tariff)
-              .foldM(handleError, _ => Created(s"A new tariff has been added $tariff"))
+              .foldM(handleError, addedTariff => Created(s"A new tariff has been added $addedTariff"))
         } yield resp
     })
 
@@ -73,5 +71,5 @@ object Routes {
       }
 
   val allRoutes: Kleisli[AppTask, Request[AppTask], Response[AppTask]] =
-    (Routes.chargeSessionRoutes <+> Routes.tariffRoutes).orNotFound
+    (Routes.chargeSessionRoutes <+> DriverRoutes.routes <+> Routes.tariffRoutes).orNotFound
 }

@@ -1,10 +1,10 @@
 package com.tvi.charging.repository
 
-import com.tvi.charging.model.tariff.Tariff
+import com.tvi.charging.model.tariff.{AddTariffRequest, TariffRecord}
 import com.tvi.charging.model.{BadRequestError, NoActiveTariffNotFoundError}
 import zio.logging.{Logging, log}
 import zio.macros.accessible
-import zio.{Has, RIO, Ref, UIO, ULayer, ZIO, ZLayer}
+import zio.{Has, RIO, Ref, ULayer, ZIO}
 
 import java.time.LocalDateTime
 
@@ -14,33 +14,35 @@ object TariffService {
   type Env = Logging
 
   trait Service {
-    def submitTariff(tariff: Tariff): RIO[Env, Unit]
-    def getActiveTariff(startDateTime: LocalDateTime): RIO[Env, Tariff]
+    def submitTariff(addTariffRequest: AddTariffRequest): RIO[Env, TariffRecord]
+    def getActiveTariff(startDateTime: LocalDateTime): RIO[Env, TariffRecord]
   }
 
   object Service {
-    val inMemory: Service =
+    def inMemory(tariffsRef: Ref[List[TariffRecord]]): Service =
       new Service {
-        val tariffsRef: UIO[Ref[List[Tariff]]] = Ref.make[List[Tariff]](List.empty)
-        override def submitTariff(tariff: Tariff): RIO[Env, Unit] =
+        override def submitTariff(addTariffRequest: AddTariffRequest): RIO[Env, TariffRecord] =
           for {
-            _ <- ZIO.when(tariff.startsFrom.isBefore(LocalDateTime.now())) {
+            tariffRecord <- ZIO.succeed(addTariffRequest.toTariffRecord)
+            _ <- ZIO.when(addTariffRequest.startsFrom.exists(_.isBefore(LocalDateTime.now()))) {
               ZIO.fail(BadRequestError("Tariff can't be applied retroactively"))
             }
-            _ <- log.info(s"Adding tariff $tariff")
-            tariffs <- tariffsRef
-            _ <- tariffs.update(_ :+ tariff)
-          } yield ()
+            _ <- log.info(s"Adding tariff $tariffRecord")
+            _ <- tariffsRef.update(_ :+ tariffRecord)
+          } yield tariffRecord
 
-        override def getActiveTariff(startDateTime: LocalDateTime): RIO[Env, Tariff] =
+        override def getActiveTariff(startDateTime: LocalDateTime): RIO[Env, TariffRecord] =
           (for {
-            _ <- log.info(s"Looking for an active tariff at ${startDateTime.toString}")
-            tariffs <- tariffsRef
-            tariff <- tariffs.get.flatMap(list => ZIO.fromOption(list.findLast(_.startsFrom.isBefore(startDateTime))))
+            _ <- log.info(s"Looking for a tariff which is active at ${startDateTime.toString}")
+            tariff <-
+              tariffsRef.get.flatMap(list => ZIO.fromOption(list.findLast(_.startsFrom.isBefore(startDateTime))))
           } yield tariff)
-            .orElseFail(NoActiveTariffNotFoundError(s"There is no active tariff starts from $startDateTime"))
+            .orElseFail(NoActiveTariffNotFoundError(s"There is no active tariff starting from $startDateTime"))
       }
   }
 
-  val inMemory: ULayer[Has[Service]] = ZLayer.succeed(Service.inMemory)
+  val inMemory: ULayer[Has[Service]] = (for {
+    tariffsRef <- Ref.make[List[TariffRecord]](List.empty)
+    service <- ZIO.succeed(Service.inMemory(tariffsRef))
+  } yield service).toLayer
 }
