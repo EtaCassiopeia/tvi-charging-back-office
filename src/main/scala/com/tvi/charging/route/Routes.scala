@@ -3,11 +3,15 @@ package com.tvi.charging.route
 import cats.data.Kleisli
 import cats.implicits._
 import com.tvi.charging.ChargingService.AppTask
-import com.tvi.charging.model.chargeSession.AddChargeSessionRequest
-import com.tvi.charging.model.tariff._
-import com.tvi.charging.model.{BadRequestError, HttpError, NoActiveTariffNotFoundError}
+import com.tvi.charging.model.{
+  AddChargeSessionRequest,
+  AddTariffRequest,
+  BadRequestError,
+  HttpCreatedResponse,
+  HttpError,
+  NoActiveTariffNotFoundError
+}
 import com.tvi.charging.model.implicits._
-import com.tvi.charging.model.chargeSession._
 import com.tvi.charging.repository.{ChargeSessionService, TariffService}
 import io.circe.generic.auto._
 import io.circe.refined._
@@ -52,7 +56,10 @@ object Routes {
           resp <-
             TariffService
               .submitTariff(tariff)
-              .foldM(handleError, addedTariff => Created(s"A new tariff has been added $addedTariff"))
+              .foldM(
+                handleError,
+                addedTariff => Created(HttpCreatedResponse(s"A new tariff has been added $addedTariff"))
+              )
         } yield resp
     })
 
@@ -66,7 +73,10 @@ object Routes {
             resp <-
               ChargeSessionService
                 .addChargeSession(chargeSession)
-                .foldM(handleError, _ => Created(s"A new charge session has been added $chargeSession"))
+                .foldM(
+                  handleError,
+                  _ => Created(HttpCreatedResponse(s"A new charge session has been added $chargeSession"))
+                )
           } yield resp
       }
 

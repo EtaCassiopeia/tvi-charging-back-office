@@ -1,14 +1,7 @@
 package com.tvi.charging.repository
 
 import cats.data.Validated.Invalid
-import com.tvi.charging.model.BadRequestError
-import com.tvi.charging.model.chargeSession.{
-  AddChargeSessionRequest,
-  ChargeSessionRecord,
-  ChargeSessionResponse,
-  ChargeSessionsResponse,
-  Cost
-}
+import com.tvi.charging.model._
 import com.tvi.charging.repository.TariffService.TariffService
 import zio.logging.{Logging, log}
 import zio.macros.accessible

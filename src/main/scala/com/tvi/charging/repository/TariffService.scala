@@ -1,7 +1,6 @@
 package com.tvi.charging.repository
 
-import com.tvi.charging.model.tariff.{AddTariffRequest, TariffRecord}
-import com.tvi.charging.model.{BadRequestError, NoActiveTariffNotFoundError}
+import com.tvi.charging.model.{AddTariffRequest, BadRequestError, NoActiveTariffNotFoundError, TariffRecord}
 import zio.logging.{Logging, log}
 import zio.macros.accessible
 import zio.{Has, RIO, Ref, ULayer, ZIO}

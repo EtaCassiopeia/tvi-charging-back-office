@@ -1,14 +1,12 @@
 package com.tvi.charging.model
 
-import com.tvi.charging.model.chargeSession.{AddChargeSessionRequest, ConsumedEnergyPerKWH}
+import com.tvi.charging.model.tariff.{Fee, ServiceFee}
 import io.circe.generic.auto._
 import io.circe.parser.decode
+import com.tvi.charging.model.implicits._
 import zio.ZIO
 import zio.test.Assertion.equalTo
 import zio.test.{DefaultRunnableSpec, ZSpec, assert}
-import com.tvi.charging.model.implicits._
-import com.tvi.charging.model.chargeSession._
-import com.tvi.charging.model.tariff.{ConsumedEnergyFreePerKWH, Fee, ParkingFeePerHour, ServiceFee, TariffRecord}
 
 import java.time.LocalDateTime
 import java.util.Currency
@@ -42,7 +40,7 @@ object ChargeSessionSpec extends DefaultRunnableSpec {
           )
           tariff <- ZIO.succeed(
             TariffRecord(
-              ConsumedEnergyFreePerKWH(Fee.unsafeFrom(0.25), Currency.getInstance("EUR")),
+              ConsumedEnergyFeePerKWH(Fee.unsafeFrom(0.25), Currency.getInstance("EUR")),
               ParkingFeePerHour(Fee.unsafeFrom(0.01), Currency.getInstance("EUR")),
               ServiceFee.unsafeFrom(0.4),
               defaultStartTime

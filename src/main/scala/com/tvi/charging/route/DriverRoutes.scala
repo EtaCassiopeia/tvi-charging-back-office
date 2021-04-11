@@ -7,7 +7,6 @@ import com.tvi.charging.repository.ChargeSessionService
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.{`Content-Disposition`, `Content-Type`}
-import com.tvi.charging.model.chargeSession._
 import zio.interop.catz._
 import zio.logging.log
 
