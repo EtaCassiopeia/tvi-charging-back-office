@@ -50,7 +50,7 @@ Under the hood circe is implemented using `Shapeless` and `macros` which adds mo
 
 Layers are a great feature of ZIO but sometimes providing layers could be a bit difficult. `zio-magic` facilitates providing the layers but automatically resolving the dependencies between different layers and wiring them together.
 
-Note: A simple authentication mechanism has been added to the project to demonstrate the idea of limiting the access to the restricted endpoints 
+Note: A simple authentication mechanism has been added to the project to demonstrate the idea of limiting access to the restricted endpoints 
 
 ## How to run
 
@@ -66,17 +66,17 @@ The Project uses below tool versions :
 
 ### Run the application using SBT
 
-Since there is only one executable application in the project, it's suffice to run the following command to run the application:
+Since there is only one executable program in the project, just run the following command to run the program:
 
 ```shell
 sbt run
 ```
 
 ### Run the application using docker-compose
-As an alternative to running the application using SBT, it's also possible to make a Docker images out of the project and run it using Docker or docker-compose:
+As an alternative to running the application using SBT, it's also possible to make a Docker image out of the project and run it using Docker or docker-compose:
 
 #### Create Docker image
-Run the following command to create a Docker image out of the project artifacts:
+Run the following command to create a Docker image out of the project's artifacts:
 
 ```shell
 sbt docker:publishLocal
@@ -103,8 +103,8 @@ docker-compose down -v
 
 ### Test the application
 
-In order to simplify testing the application a simple script has been added to the project which sends the required requests to add a tariff and a couple of charge sessions.
-At the end script also makes a call to the server to retriew the overview. Please sun the following script to test the application:
+In order to simplify testing the application, a simple script has been added to the project which sends the required requests to add a tariff and a couple of charge sessions.
+In the end, the script also makes a call to the server to retrieve the overview. Please run the following script to test the application:
 
 ```shell
 ./script/load.sh
@@ -118,7 +118,7 @@ Note: On MacOS the time might need to synchronize timezone from host to containe
 {"error":"A charge session can't start nor end in the future"}
 ```
 
-As a workaround you can run the container by passing the timezone as an environment variable:
+As a workaround, you can run the container by passing the timezone as an environment variable:
 
 ```shell
 export TZ=$(readlink /etc/localtime | sed 's#/var/db/timezone/zoneinfo/##');
