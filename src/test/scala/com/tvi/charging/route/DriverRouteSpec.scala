@@ -2,6 +2,7 @@ package com.tvi.charging.route
 
 import com.tvi.charging.ChargingService.AppTask
 import com.tvi.charging.config.ServerConfig
+import com.tvi.charging.csv.toCsv
 import com.tvi.charging.model._
 import com.tvi.charging.model.tariff.{Fee, ServiceFee}
 import com.tvi.charging.repository.{ChargeSessionService, TariffService}
@@ -55,16 +56,15 @@ object DriverRouteSpec extends DefaultRunnableSpec {
               uri"/session/driver-1"
             )
 
+            expected <-
+              ChargeSessionService.getChargeSessionsByDriverId("driver-1").map(result => toCsv(result.session))
+
             response <-
               driverSessionsService
                 .run(rq)
                 .value
                 .flatMap(_.get.body.compile.toVector.map(x => x.map(_.toChar).mkString("")))
-          } yield assert(response)(
-            containsString(
-              "2021-04-12T12:16:22.036,2021-04-12T12:16:23.036,100.0 kWh,1 EUR/kWh,1 EUR/hour,0.4,100.0 EUR,0.40000 EUR"
-            )
-          )
+          } yield assert(response)(equalTo(expected))
 
         testCase.provideSomeLayer(testLayer)
       }
