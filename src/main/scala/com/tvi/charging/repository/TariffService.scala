@@ -33,6 +33,7 @@ object TariffService {
         override def getActiveTariff(startDateTime: LocalDateTime): RIO[Env, TariffRecord] =
           (for {
             _ <- log.info(s"Looking for a tariff which is active at ${startDateTime.toString}")
+            _ <- tariffsRef.get.flatMap(tariffs => log.info(tariffs.mkString(",")))
             tariff <-
               tariffsRef.get.flatMap(list => ZIO.fromOption(list.findLast(_.startsFrom.isBefore(startDateTime))))
           } yield tariff)

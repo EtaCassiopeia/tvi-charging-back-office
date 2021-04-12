@@ -13,7 +13,7 @@ import scala.util.Try
 import scala.util.matching.Regex
 
 case class ConsumedEnergyFeePerKWH(amount: Fee, currency: Currency) {
-  override def toString: String = s"$amount ${currency.getSymbol}/kWh"
+  override def toString: String = s"$amount ${currency.getCurrencyCode}/kWh"
 }
 
 object ConsumedEnergyFeePerKWH {
@@ -34,7 +34,7 @@ object ConsumedEnergyFeePerKWH {
 }
 
 case class ParkingFeePerHour(amount: Fee, currency: Currency) {
-  override def toString: String = s"$amount ${currency.getSymbol}/hour"
+  override def toString: String = s"$amount ${currency.getCurrencyCode}/hour"
 }
 
 object ParkingFeePerHour {
