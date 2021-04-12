@@ -1,11 +1,13 @@
 import Dependencies._
-import Settings.{commonSettings, compilerSettings, sbtSettings}
+import Settings.{commonSettings, compilerSettings, dockerSettings, sbtSettings}
+import sbt.Keys.mainClass
 
 lazy val root = (project in file("."))
   .settings(name := "tvi-charging-back-office")
   .settings(commonSettings: _*)
   .settings(compilerSettings: _*)
   .settings(sbtSettings: _*)
+  .settings(dockerSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       Libraries.zio,
@@ -18,5 +20,10 @@ lazy val root = (project in file("."))
       Libraries.test.zioTest,
       Libraries.test.zioTestSbt,
       Libraries.test.scalaCheck
-    ) ++ Libraries.circeModules ++ Libraries.http4sModules ++ Libraries.zioConfigModules
+    ) ++ Libraries.circeModules ++ Libraries.http4sModules ++ Libraries.zioConfigModules,
+    mainClass in Compile := Some("com.tvi.charging.ChargingService")
+  )
+  .enablePlugins(
+    JavaAppPackaging,
+    DockerPlugin
   )

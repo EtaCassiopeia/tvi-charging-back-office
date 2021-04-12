@@ -1,3 +1,6 @@
+import com.typesafe.sbt.packager.Keys._
+import com.typesafe.sbt.packager.docker.DockerPermissionStrategy
+import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.{Docker, dockerPermissionStrategy}
 import org.scalafmt.sbt.ScalafmtPlugin.autoImport.scalafmtOnCompile
 import sbt.Keys.{parallelExecution, _}
 import sbt._
@@ -48,5 +51,19 @@ object Settings {
         "jitpack".at("https://jitpack.io"),
         Resolver.jcenterRepo
       )
+    )
+
+  lazy val dockerSettings =
+    Seq(
+      dockerBaseImage := "openjdk:8-jdk",
+      packageName in Docker := "tvi/back-office",
+      maintainer in Docker := "Mohsen Zainalpour",
+      packageSummary := "TVI back-office system",
+      packageDescription := "TVI back-office system",
+      dockerExposedPorts ++= Seq(8181),
+      dockerUpdateLatest := true,
+      daemonUserUid in Docker := None,
+      daemonUser in Docker := "root",
+      dockerPermissionStrategy := DockerPermissionStrategy.None
     )
 }

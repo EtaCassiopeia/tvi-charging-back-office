@@ -6,6 +6,7 @@ import io.circe.parser.decode
 import zio.ZIO
 import zio.test.Assertion.{anything, equalTo, fails, isSubtype}
 import zio.test.{DefaultRunnableSpec, assert}
+import com.tvi.charging.model.implicits._
 
 import java.time.LocalDateTime
 

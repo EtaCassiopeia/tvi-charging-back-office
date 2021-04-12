@@ -17,7 +17,7 @@ case class ConsumedEnergyFeePerKWH(amount: Fee, currency: Currency) {
 }
 
 object ConsumedEnergyFeePerKWH {
-  private val consumedEnergyFreePerKWHRegEx = """(\d+?\.?\d+)\s?([A-Z]{3})\s?/\s?kWh""".r
+  private val consumedEnergyFreePerKWHRegEx = """(\d*?\.?\d*)\s?([A-Z]{3})\s?/\s?kWh""".r
 
   def fromString(value: String): Either[String, ConsumedEnergyFeePerKWH] =
     parseFeeExpression(
@@ -38,7 +38,7 @@ case class ParkingFeePerHour(amount: Fee, currency: Currency) {
 }
 
 object ParkingFeePerHour {
-  private val parkingFeePerHourRegEx = """(\d+?\.?\d+)\s?([A-Z]{3})\s?/\s?hour""".r
+  private val parkingFeePerHourRegEx = """(\d*?\.?\d*)\s?([A-Z]{3})\s?/\s?hour""".r
 
   def fromString(value: String): Either[String, ParkingFeePerHour] =
     parseFeeExpression(

@@ -3,6 +3,7 @@ package com.tvi.charging.route
 import cats.Monad
 import com.tvi.charging.ChargingService.AppTask
 import com.tvi.charging.csv.CsvWriter
+import com.tvi.charging.model.HttpError
 import com.tvi.charging.repository.ChargeSessionService
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -26,17 +27,20 @@ object DriverRoutes {
       .of[AppTask] {
         case GET -> Root / "session" / driverId =>
           for {
-            _ <- log.info("Reporting charge sessions")
+            _ <- log.info(s"Reporting charge sessions [$driverId]")
             resp <-
               ChargeSessionService
                 .getChargeSessionsByDriverId(driverId)
                 .flatMap(sessions =>
-                  Ok(sessions).map(
-                    _.putHeaders(
-                      Header("Content-Type", "text/csv"),
-                      `Content-Disposition`("attachment", Map("filename" -> "charge-sessions-report.csv"))
+                  if (sessions.session.isEmpty)
+                    NotFound()
+                  else
+                    Ok(sessions).map(
+                      _.putHeaders(
+                        Header("Content-Type", "text/csv"),
+                        `Content-Disposition`("attachment", Map("filename" -> "charge-sessions-report.csv"))
+                      )
                     )
-                  )
                 )
           } yield resp
       }

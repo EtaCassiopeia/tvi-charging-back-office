@@ -22,7 +22,7 @@ case class ConsumedEnergyPerKWH(amount: Double) {
 }
 
 object ConsumedEnergyPerKWH {
-  private val consumedEnergyPerKWHRegEx = """(\d+?\.?\d+)\s?kWh""".r
+  private val consumedEnergyPerKWHRegEx = """(\d*?\.?\d*)\s?kWh""".r
 
   def fromString(expression: String): Either[String, ConsumedEnergyPerKWH] =
     Try {

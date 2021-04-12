@@ -3,18 +3,9 @@ package com.tvi.charging.route
 import cats.data.Kleisli
 import cats.implicits._
 import com.tvi.charging.ChargingService.AppTask
-import com.tvi.charging.model.{
-  AddChargeSessionRequest,
-  AddTariffRequest,
-  BadRequestError,
-  HttpCreatedResponse,
-  HttpError,
-  NoActiveTariffNotFoundError
-}
-import com.tvi.charging.model.implicits._
+import com.tvi.charging.model._
 import com.tvi.charging.repository.{ChargeSessionService, TariffService}
 import io.circe.generic.auto._
-import io.circe.refined._
 import org.http4s._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.circe.CirceEntityEncoder._
@@ -26,6 +17,8 @@ import org.http4s.server.middleware.authentication.BasicAuth.BasicAuthenticator
 import zio.RIO
 import zio.interop.catz._
 import zio.logging.log
+import com.tvi.charging.model.implicits._
+import io.circe.refined._
 
 object Routes {
 
